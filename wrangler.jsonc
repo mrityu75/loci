@@ -10,5 +10,56 @@
   },
   "compatibility_flags": [
     "nodejs_compat"
-  ]
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "loci-db",
+      "database_id": "YOUR_D1_DATABASE_ID"
+    }
+  ],
+  "vectorize": [
+    {
+      "binding": "EPISODES_INDEX",
+      "index_name": "loci-episodes",
+      "dimensions": 1536,
+      "metric": "cosine"
+    },
+    {
+      "binding": "LEARNINGS_INDEX",
+      "index_name": "loci-learnings",
+      "dimensions": 1536,
+      "metric": "cosine"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "WORKING_MEMORY",
+        "class_name": "WorkingMemoryDO"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_classes": ["WorkingMemoryDO"]
+    }
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "MEMORY_QUEUE",
+        "queue": "loci-memory-consolidation"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "loci-memory-consolidation",
+        "max_batch_size": 10,
+        "max_batch_timeout": 30,
+        "max_retries": 3
+      }
+    ]
+  }
 }
