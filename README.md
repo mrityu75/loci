@@ -15,6 +15,7 @@ The name comes from the *Method of Loci* — the ancient memory technique where 
 - **Working Memory** — typed, queryable state that persists within and across sessions
 - **Episodic Memory** — retrievable logs of past runs; what the agent tried, what failed, what succeeded
 - **Semantic Memory** — distilled generalizations extracted from episodes; learned rules, not raw logs
+![Loci Architecture](./loci_architecture.svg)
 
 ## Why Loci?
 
