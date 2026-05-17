@@ -1,61 +1,63 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "loci",
-  "compatibility_date": "2026-05-14",
-  "observability": {
-    "enabled": true
-  },
-  "assets": {
-    "directory": "."
-  },
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "loci-db",
-      "database_id": "YOUR_D1_DATABASE_ID"
-    }
-  ],
-  "vectorize": [
-    {
-      "binding": "EPISODES_INDEX",
-      "index_name": "loci-episodes"
-    },
-    {
-      "binding": "LEARNINGS_INDEX",
-      "index_name": "loci-learnings"
-    }
-  ],
-  "durable_objects": {
-    "bindings": [
-      {
-        "name": "WORKING_MEMORY",
-        "class_name": "WorkingMemoryDO"
-      }
-    ]
-  },
-  "migrations": [
-    {
-      "tag": "v1",
-      "new_classes": ["WorkingMemoryDO"]
-    }
-  ],
-  "queues": {
-    "producers": [
-      {
-        "binding": "MEMORY_QUEUE",
-        "queue": "loci-memory-consolidation"
-      }
-    ],
-    "consumers": [
-      {
-        "queue": "loci-memory-consolidation",
-        "max_batch_size": 10,
-        "max_batch_timeout": 30,
-        "max_retries": 3
-      }
-    ]
-  }
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "loci",
+	"compatibility_date": "2026-05-14",
+	"observability": {
+		"enabled": true
+	},
+	"assets": {
+		"directory": "."
+	},
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "loci-db",
+			"database_id": "bd397557-be60-43d2-b1e3-b0bcd01fbe0f"
+		}
+	],
+	"vectorize": [
+		{
+			"binding": "EPISODES_INDEX",
+			"index_name": "loci-episodes"
+		},
+		{
+			"binding": "LEARNINGS_INDEX",
+			"index_name": "loci-learnings"
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "WORKING_MEMORY",
+				"class_name": "WorkingMemoryDO"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_classes": [
+				"WorkingMemoryDO"
+			]
+		}
+	],
+	"queues": {
+		"producers": [
+			{
+				"binding": "MEMORY_QUEUE",
+				"queue": "loci-memory-consolidation"
+			}
+		],
+		"consumers": [
+			{
+				"queue": "loci-memory-consolidation",
+				"max_batch_size": 10,
+				"max_batch_timeout": 30,
+				"max_retries": 3
+			}
+		]
+	}
 }
