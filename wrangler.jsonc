@@ -21,15 +21,11 @@
   "vectorize": [
     {
       "binding": "EPISODES_INDEX",
-      "index_name": "loci-episodes",
-      "dimensions": 1536,
-      "metric": "cosine"
+      "index_name": "loci-episodes"
     },
     {
       "binding": "LEARNINGS_INDEX",
-      "index_name": "loci-learnings",
-      "dimensions": 1536,
-      "metric": "cosine"
+      "index_name": "loci-learnings"
     }
   ],
   "durable_objects": {
