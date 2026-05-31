@@ -47,7 +47,7 @@ export async function retrieveSimilarEpisodes(
   index: VectorizeIndex,
   options: RetrievalOptions,
 ): Promise<RetrievedMemory[]> {
-  const { queryVector, topK = 5, minScore = 0.5 } = options;
+  const { queryVector, topK = 5, minScore = 0.1 } = options;
 
   const { matches } = await index.query(queryVector, {
     topK,
