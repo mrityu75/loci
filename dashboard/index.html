@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loci Dashboard</title>
+
+  <!-- Tailwind CSS (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { mono: ['ui-monospace', 'SFMono-Regular', 'monospace'] },
+        },
+      },
+    };
+  </script>
+
+  <!--
+    React 18 + ReactDOM via UMD CDN — exposed as window.React and window.ReactDOM.
+    Babel Standalone processes JSX and TypeScript annotations in-browser;
+    no build step or importmap plumbing required.
+  -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    /* Thin custom scrollbar so long tables don't look heavy */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen antialiased">
+  <div id="root"></div>
+
+  <!--
+    Scripts load in dependency order.
+    Each file is a global-scope Babel script (no import/export);
+    React is accessed as the window.React UMD global.
+  -->
+  <script type="text/babel" data-presets="react,typescript" src="./src/api/client.ts"></script>
+  <script type="text/babel" data-presets="react,typescript" src="./src/pages/Episodes.tsx"></script>
+  <script type="text/babel" data-presets="react,typescript" src="./src/pages/Learnings.tsx"></script>
+  <script type="text/babel" data-presets="react,typescript" src="./src/pages/RetrievalTrace.tsx"></script>
+  <script type="text/babel" data-presets="react,typescript" src="./src/App.tsx"></script>
+</body>
+</html>
