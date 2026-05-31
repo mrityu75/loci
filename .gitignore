@@ -1,6 +1,19 @@
-# wrangler files
-.wrangler
+# dependencies
+node_modules/
+
+# wrangler / Cloudflare
+.wrangler/
 .dev.vars*
 !.dev.vars.example
+
+# environment variables — use .env.example as the template
 .env*
 !.env.example
+
+# build outputs
+dist/
+*.js.map
+
+# OS
+.DS_Store
+Thumbs.db
