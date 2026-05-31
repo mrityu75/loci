@@ -6,6 +6,7 @@ import {
   getEpisodeById,
   getRecentEpisodes,
 } from '../memory/episodic-store';
+import { getAllLearnings } from '../memory/semantic-store';
 import { assembleMemoryContext } from '../memory/retrieval-engine';
 
 interface Env {
@@ -29,10 +30,16 @@ interface Queue {
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...CORS },
   });
 }
 
@@ -209,6 +216,32 @@ async function handlePostSession(request: Request, env: Env): Promise<Response> 
   return json(wm, existing ? 200 : 201);
 }
 
+// GET /episodes?userId=xxx&limit=50
+async function handleGetEpisodes(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const userId = url.searchParams.get('userId');
+  const limit = Math.min(parseInt(url.searchParams.get('limit') ?? '50', 10), 200);
+  if (!userId) return err('userId query param is required');
+  const episodes = await getRecentEpisodes(env.DB, userId, limit);
+  return json({ episodes });
+}
+
+// GET /episode/:id
+async function handleGetEpisodeById(id: string, env: Env): Promise<Response> {
+  const episode = await getEpisodeById(env.DB, id);
+  if (!episode) return err('Episode not found', 404);
+  return json({ episode });
+}
+
+// GET /learnings?userId=xxx
+async function handleGetLearnings(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const userId = url.searchParams.get('userId');
+  if (!userId) return err('userId query param is required');
+  const learnings = await getAllLearnings(env.DB, userId);
+  return json({ learnings });
+}
+
 async function handleGetHealth(env: Env): Promise<Response> {
   // Quick D1 liveness check
   try {
@@ -227,11 +260,23 @@ export default {
     const { pathname } = url;
     const method = request.method.toUpperCase();
 
+    if (method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: CORS });
+    }
     if (method === 'POST' && pathname === '/episode') {
       return handlePostEpisode(request, env);
     }
+    if (method === 'GET' && pathname === '/episodes') {
+      return handleGetEpisodes(request, env);
+    }
+    if (method === 'GET' && pathname.startsWith('/episode/')) {
+      return handleGetEpisodeById(pathname.slice('/episode/'.length), env);
+    }
     if (method === 'GET' && pathname === '/retrieve') {
       return handleGetRetrieve(request, env);
+    }
+    if (method === 'GET' && pathname === '/learnings') {
+      return handleGetLearnings(request, env);
     }
     if (method === 'POST' && pathname === '/session') {
       return handlePostSession(request, env);
