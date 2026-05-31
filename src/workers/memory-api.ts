@@ -30,6 +30,18 @@ interface Queue {
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
+// Character-frequency vector normalised to unit length.
+// Produces 1536 dims to match the loci-episodes Vectorize index.
+// Replace with a real embedding model (OpenAI, Cohere, Cloudflare AI) in production.
+function demoEmbed(text: string, dims = 1536): number[] {
+  const vec = new Array<number>(dims).fill(0);
+  for (let i = 0; i < text.length; i++) {
+    vec[i % dims] += text.charCodeAt(i) / 255;
+  }
+  const magnitude = Math.sqrt(vec.reduce((s, v) => s + v * v, 0)) || 1;
+  return vec.map((v) => v / magnitude);
+}
+
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -137,6 +149,17 @@ async function handlePostEpisode(request: Request, env: Env): Promise<Response> 
   };
 
   await insertEpisode(env.DB, episode);
+
+  // Upsert into Vectorize so POST /retrieve can surface this episode.
+  // Skip when embeddingId is set — the caller already pushed a real vector.
+  if (!episode.embeddingId) {
+    await env.EPISODES_INDEX.upsert([{
+      id: episode.id,
+      values: demoEmbed(episode.summary ?? episode.sessionId),
+      metadata: { userId: episode.userId },
+    }]);
+  }
+
   return json({ id: episode.id, episode }, 201);
 }
 

@@ -11,6 +11,12 @@ interface VectorizeMatch {
   metadata?: Record<string, string | number | boolean>;
 }
 
+export interface VectorizeVector {
+  id: string;
+  values: number[];
+  metadata?: Record<string, string | number | boolean>;
+}
+
 export interface VectorizeIndex {
   query(
     vector: number[],
@@ -20,6 +26,7 @@ export interface VectorizeIndex {
       returnMetadata?: 'none' | 'indexed' | 'all';
     },
   ): Promise<{ matches: VectorizeMatch[]; count: number }>;
+  upsert(vectors: VectorizeVector[]): Promise<{ mutationId: string }>;
 }
 
 export interface RetrievalOptions {
