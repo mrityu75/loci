@@ -1,0 +1,19 @@
+{
+  "name": "loci",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "demo:without-loci": "tsx demo/run-without-loci.ts",
+    "demo:with-loci": "tsx demo/run-with-loci.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.36.3"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250525.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3",
+    "wrangler": "^4.0.0"
+  }
+}
