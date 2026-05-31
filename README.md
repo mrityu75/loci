@@ -1,5 +1,9 @@
 # Loci — Persistent Episodic Memory for AI Agents
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-loci.mrityu75.workers.dev-brightgreen?style=flat-square)](https://loci.mrityu75.workers.dev)
+[![GitHub](https://img.shields.io/badge/GitHub-mrityu75%2Floci-181717?style=flat-square&logo=github)](https://github.com/mrityu75/loci)
+[![Deploy to Cloudflare Workers](https://img.shields.io/badge/Deploy%20to-Cloudflare%20Workers-F38020?style=flat-square&logo=cloudflare)](https://deploy.workers.cloudflare.com/?url=https://github.com/mrityu75/loci)
+
 > *"What we remember, we become."*
 
 Loci gives AI agents the ability to remember across sessions. Most agent frameworks reset to zero on every run — no learning, no continuity, no accumulated context. Loci fixes that with a structured, retrievable memory layer built entirely on Cloudflare's edge infrastructure.
