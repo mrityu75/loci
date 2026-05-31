@@ -2,12 +2,13 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "loci",
 	"main": "src/workers/memory-api.ts",
+	"account_id": "b4edf2ecd7b7d59dae03d95a4df968b5",
 	"compatibility_date": "2026-05-14",
 	"observability": {
 		"enabled": true
 	},
 	"assets": {
-		"directory": "."
+		"directory": "dashboard"
 	},
 	"compatibility_flags": [
 		"nodejs_compat"
