@@ -140,9 +140,9 @@ async function handlePostEpisode(request: Request, env: Env): Promise<Response> 
   return json({ id: episode.id, episode }, 201);
 }
 
-// GET /retrieve
-// Accepts JSON body: { userId, vector, topK?, minScore?, includeHighConfidenceLearnings? }
-// Using a body with GET is intentional — vectors are too large for query params.
+// POST /retrieve
+// Body: { userId, vector, topK?, minScore?, includeHighConfidenceLearnings? }
+// POST (not GET) because Node.js fetch/undici rejects GET requests with a body.
 async function handleGetRetrieve(request: Request, env: Env): Promise<Response> {
   let body: Record<string, unknown>;
   try {
@@ -282,7 +282,7 @@ export default {
     if (method === 'GET' && pathname.startsWith('/episode/')) {
       return handleGetEpisodeById(pathname.slice('/episode/'.length), env);
     }
-    if (method === 'GET' && pathname === '/retrieve') {
+    if (method === 'POST' && pathname === '/retrieve') {
       return handleGetRetrieve(request, env);
     }
     if (method === 'GET' && pathname === '/learnings') {

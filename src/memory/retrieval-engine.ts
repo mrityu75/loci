@@ -40,11 +40,12 @@ export async function retrieveSimilarEpisodes(
   index: VectorizeIndex,
   options: RetrievalOptions,
 ): Promise<RetrievedMemory[]> {
-  const { userId, queryVector, topK = 5, minScore = 0.5 } = options;
+  const { queryVector, topK = 5, minScore = 0.5 } = options;
 
   const { matches } = await index.query(queryVector, {
     topK,
-    filter: { userId },
+    // Metadata filtering requires a pre-created metadata index; omit for now
+    // and filter by userId in the D1 lookup instead.
     returnMetadata: 'none',
   });
 

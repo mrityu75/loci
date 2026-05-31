@@ -56,7 +56,7 @@ export class LociClient {
 
   async retrieveContext(input: RetrieveContextInput): Promise<MemoryContext[]> {
     const res = await fetch(`${this.apiUrl}/retrieve`, {
-      method: 'GET',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
     });

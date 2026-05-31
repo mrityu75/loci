@@ -51,7 +51,7 @@ function section(label: string, value: string) {
 
 // ── demo embedding (replace with a real model in production) ──────────────────
 
-function demoEmbed(text: string, dims = 64): number[] {
+function demoEmbed(text: string, dims = 1536): number[] {
   const vec = new Array<number>(dims).fill(0);
   for (let ci = 0; ci < text.length; ci++) {
     vec[ci % dims] += text.charCodeAt(ci) / 255;
