@@ -254,7 +254,17 @@ async function handleGetHealth(env: Env): Promise<Response> {
 
 // ── fetch export ──────────────────────────────────────────────────────────────
 
+interface MessageBatch {
+  messages: { body: unknown; ack(): void }[];
+}
+
 export default {
+  async queue(batch: MessageBatch, _env: Env): Promise<void> {
+    // Placeholder: acknowledge all messages so the queue doesn't stall.
+    // Memory consolidation logic (reinforcement, embedding) goes here.
+    for (const msg of batch.messages) msg.ack();
+  },
+
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const { pathname } = url;
