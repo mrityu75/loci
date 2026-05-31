@@ -1,6 +1,7 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "loci",
+	"main": "src/workers/memory-api.ts",
 	"compatibility_date": "2026-05-14",
 	"observability": {
 		"enabled": true
