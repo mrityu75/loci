@@ -13,7 +13,7 @@ const TABS: { id: TabId; label: string; icon: string }[] = [
 function App() {
   const { useState, useMemo, useEffect } = React;
 
-  const [apiUrl, setApiUrl]     = useState('http://localhost:8787');
+  const [apiUrl, setApiUrl]     = useState(window.location.origin);
   const [userId, setUserId]     = useState('demo-user-001');
   const [activeTab, setActiveTab] = useState<TabId>('episodes');
   const [health, setHealth]     = useState<'unknown' | 'ok' | 'degraded' | 'error'>('unknown');
