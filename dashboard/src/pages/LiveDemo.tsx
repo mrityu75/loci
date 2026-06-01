@@ -91,7 +91,7 @@ type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 function LiveDemo({ client, userId }: { client: LociApiClient; userId: string }) {
   const { useState, useEffect, useCallback, useRef } = React;
 
-  const [apiKey, setApiKey]           = useState('');
+  const [apiKey, setApiKey]           = useState(localStorage.getItem('loci_demo_api_key') || '');
   const [task, setTask]               = useState('');
   const [episodeCount, setEpisodeCount] = useState<number | null>(null);
 
@@ -111,6 +111,10 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
 
   const sessionIdRef  = useRef<string>(crypto.randomUUID());
   const startedAtRef  = useRef<number>(Date.now());
+
+  useEffect(function() {
+    if (apiKey) localStorage.setItem('loci_demo_api_key', apiKey);
+  }, [apiKey]);
 
   // ── Episode counter ────────────────────────────────────────────────────────
 
