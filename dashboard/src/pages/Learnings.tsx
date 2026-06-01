@@ -9,7 +9,7 @@ function confidenceBadge(score: number): { label: string; cls: string } {
 function categoryTag(category: string): string {
   const map: Record<string, string> = {
     bug: 'tag-red',
-    pattern: 'tag-purple',
+    pattern: 'tag-amber',
     style: 'tag-gray',
     convention: 'tag-gray',
     performance: 'tag-yellow',
@@ -67,9 +67,9 @@ function Learnings({ client, userId }: { client: LociApiClient; userId: string }
                     style={{
                       padding: '5px 10px', borderRadius: 6, fontSize: 11.5, fontWeight: 600,
                       border: '1px solid',
-                      background: active ? 'rgba(124,58,237,0.2)' : 'transparent',
-                      borderColor: active ? 'rgba(124,58,237,0.5)' : 'var(--border-md)',
-                      color: active ? '#a855f7' : 'var(--text-3)',
+                      background: active ? 'rgba(245,158,11,0.18)' : 'transparent',
+                      borderColor: active ? 'rgba(245,158,11,0.5)' : 'var(--border-md)',
+                      color: active ? '#f59e0b' : 'var(--text-3)',
                       cursor: 'pointer', transition: 'all 0.12s',
                     }}
                   >
