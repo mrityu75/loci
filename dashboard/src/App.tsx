@@ -2,10 +2,12 @@
 // components (Episodes, Learnings, RetrievalTrace) and LociApiClient
 // are already defined in the global scope by prior script tags.
 
-type TabId = 'episodes' | 'learnings' | 'retrieval';
+type TabId = 'demo' | 'research' | 'episodes' | 'learnings' | 'retrieval';
 
 const TABS: { id: TabId; label: string; icon: string }[] = [
-  { id: 'episodes',  label: 'Episodes',        icon: '🧠' },
+  { id: 'demo',      label: 'Live Demo',        icon: '⚡' },
+  { id: 'research',  label: 'Context',          icon: '📖' },
+  { id: 'episodes',  label: 'Episodes',         icon: '🧠' },
   { id: 'learnings', label: 'Learnings',        icon: '📚' },
   { id: 'retrieval', label: 'Retrieval Trace',  icon: '🔍' },
 ];
@@ -15,7 +17,7 @@ function App() {
 
   const [apiUrl, setApiUrl]     = useState(window.location.origin);
   const [userId, setUserId]     = useState('demo-user-001');
-  const [activeTab, setActiveTab] = useState<TabId>('episodes');
+  const [activeTab, setActiveTab] = useState<TabId>('demo');
   const [health, setHealth]     = useState<'unknown' | 'ok' | 'degraded' | 'error'>('unknown');
 
   const client = useMemo(() => new LociApiClient(apiUrl), [apiUrl]);
@@ -112,8 +114,10 @@ function App() {
 
       {/* ── Main content ── */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6">
-        {activeTab === 'episodes'  && <Episodes  client={client} userId={userId} />}
-        {activeTab === 'learnings' && <Learnings client={client} userId={userId} />}
+        {activeTab === 'demo'      && <LiveDemo      client={client} userId={userId} />}
+        {activeTab === 'research'  && <Research />}
+        {activeTab === 'episodes'  && <Episodes      client={client} userId={userId} />}
+        {activeTab === 'learnings' && <Learnings     client={client} userId={userId} />}
         {activeTab === 'retrieval' && <RetrievalTrace client={client} userId={userId} />}
       </main>
 

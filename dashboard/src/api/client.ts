@@ -40,6 +40,28 @@ interface HealthStatus {
   timestamp: number;
 }
 
+interface RetrieveInput {
+  userId: string;
+  vector: number[];
+  topK?: number;
+  minScore?: number;
+  includeHighConfidenceLearnings?: boolean;
+}
+
+interface StoreEpisodeInput {
+  sessionId: string;
+  userId: string;
+  startedAt?: number;
+  endedAt?: number;
+  summary?: string;
+  metadata?: Record<string, unknown>;
+}
+
+interface StoreEpisodeResult {
+  id: string;
+  episode: Episode;
+}
+
 class LociApiClient {
   private baseUrl: string;
 
@@ -49,6 +71,19 @@ class LociApiClient {
 
   private async get<T>(path: string): Promise<T> {
     const res = await fetch(`${this.baseUrl}${path}`);
+    if (!res.ok) {
+      const text = await res.text().catch(() => res.statusText);
+      throw new Error(`${res.status} ${res.statusText}: ${text}`);
+    }
+    return res.json() as Promise<T>;
+  }
+
+  private async post<T>(path: string, body: unknown): Promise<T> {
+    const res = await fetch(`${this.baseUrl}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
     if (!res.ok) {
       const text = await res.text().catch(() => res.statusText);
       throw new Error(`${res.status} ${res.statusText}: ${text}`);
@@ -75,5 +110,14 @@ class LociApiClient {
     const q = new URLSearchParams({ userId });
     const data = await this.get<{ learnings: Learning[] }>(`/learnings?${q}`);
     return data.learnings;
+  }
+
+  async retrieve(input: RetrieveInput): Promise<MemoryContext[]> {
+    const data = await this.post<{ contexts: MemoryContext[] }>('/retrieve', input);
+    return data.contexts;
+  }
+
+  async storeEpisode(input: StoreEpisodeInput): Promise<StoreEpisodeResult> {
+    return this.post<StoreEpisodeResult>('/episode', input);
   }
 }
