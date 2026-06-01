@@ -71,8 +71,8 @@ function Research() {
           </div>
 
           {/* With Loci */}
-          <div style={{ padding: '20px 24px', background: 'rgba(59,130,246,0.04)' }}>
-            <div className="section-label" style={{ textAlign: 'center', marginBottom: 16, color: '#60a5fa' }}>
+          <div style={{ padding: '20px 24px', background: 'rgba(124,58,237,0.04)' }}>
+            <div className="section-label" style={{ textAlign: 'center', marginBottom: 16, color: '#a855f7' }}>
               With Loci — Memory accumulates across sessions
             </div>
             <div style={{ display: 'flex', flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
@@ -85,10 +85,10 @@ function Research() {
                   <div key={i} style={{ flex: 1, minWidth: 140 }}>
                     <div style={{
                       background: 'var(--bg-raised)',
-                      border: '1px solid var(--border-blue)',
+                      border: '1px solid var(--border-purple)',
                       borderRadius: 10, padding: '12px', textAlign: 'center',
                     }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: '#60a5fa', marginBottom: 8 }}>{s.label}</div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#a855f7', marginBottom: 8 }}>{s.label}</div>
                       {s.recall && (
                         <div style={{
                           fontFamily: 'ui-monospace, monospace', fontSize: 10,
@@ -105,7 +105,7 @@ function Research() {
                       <div style={{ fontSize: 11, color: 'var(--success)', fontWeight: 600, marginTop: 8 }}>{s.fix}</div>
                     </div>
                     <div style={{ textAlign: 'center', marginTop: 8 }}>
-                      <span className="tag tag-blue">↓ stored in Loci</span>
+                      <span className="tag tag-purple">↓ stored in Loci</span>
                     </div>
                   </div>
                 );
@@ -175,16 +175,16 @@ function Research() {
                   );
                 })}
                 {/* Loci row */}
-                <tr style={{ background: 'rgba(59,130,246,0.06)', borderTop: '1px solid var(--border-blue)' }}>
-                  <td style={{ padding: '10px 16px', fontWeight: 700, color: '#60a5fa', whiteSpace: 'nowrap' }}>
+                <tr style={{ background: 'rgba(124,58,237,0.06)', borderTop: '1px solid var(--border-purple)' }}>
+                  <td style={{ padding: '10px 16px', fontWeight: 700, color: '#a855f7', whiteSpace: 'nowrap' }}>
                     Loci <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--text-3)' }}>(this work)</span>
                   </td>
                   <td style={{ padding: '10px 16px', fontSize: 12, color: '#93c5fd', whiteSpace: 'nowrap' }}>Working / Episodic / Semantic</td>
                   <td style={{ padding: '10px 16px', textAlign: 'center' }}>
-                    <span className="tag tag-blue">Yes</span>
+                    <span className="tag tag-purple">Yes</span>
                   </td>
                   <td style={{ padding: '10px 16px', textAlign: 'center' }}>
-                    <span className="tag tag-blue">Yes</span>
+                    <span className="tag tag-purple">Yes</span>
                   </td>
                   <td style={{ padding: '10px 16px', fontSize: 12, color: '#93c5fd' }}>Drop-in SDK; edge-native; wraps any agent function in one line</td>
                 </tr>
@@ -199,9 +199,9 @@ function Research() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
           <div style={{
             width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
-            background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)',
+            background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 12, fontWeight: 700, color: '#60a5fa',
+            fontSize: 12, fontWeight: 700, color: '#a855f7',
           }}>3</div>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)', margin: 0 }}>How Loci Is Different</h3>
         </div>
@@ -334,17 +334,17 @@ function Research() {
 
           {/* With Loci */}
           <div style={{
-            background: 'var(--bg-surface)', border: '1px solid var(--border-blue)',
+            background: 'var(--bg-surface)', border: '1px solid var(--border-purple)',
             borderRadius: 12, overflow: 'hidden',
-            boxShadow: '0 0 30px rgba(59,130,246,0.08)',
+            boxShadow: '0 0 30px rgba(124,58,237,0.08)',
           }}>
             <div style={{
-              background: 'rgba(59,130,246,0.08)', borderBottom: '1px solid var(--border-blue)',
+              background: 'rgba(124,58,237,0.08)', borderBottom: '1px solid var(--border-purple)',
               padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8,
             }}>
               <span>🧠</span>
-              <span style={{ fontWeight: 700, fontSize: 13, color: '#60a5fa' }}>With Loci</span>
-              <span className="tag tag-blue" style={{ marginLeft: 'auto' }}>Memory-Augmented</span>
+              <span style={{ fontWeight: 700, fontSize: 13, color: '#a855f7' }}>With Loci</span>
+              <span className="tag tag-purple" style={{ marginLeft: 'auto' }}>Memory-Augmented</span>
             </div>
             <div style={{ padding: '16px' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
@@ -372,27 +372,27 @@ function Research() {
                         <td style={{ padding: '8px 0', color: 'var(--text-2)' }}>{r.task}</td>
                         <td style={{ padding: '8px 0', textAlign: 'center', color: 'var(--success)', fontWeight: 700 }}>✓</td>
                         <td style={{ padding: '8px 0', textAlign: 'center' }}>
-                          <span className="tag tag-blue">{r.injected}</span>
+                          <span className="tag tag-purple">{r.injected}</span>
                         </td>
                         <td style={{ padding: '8px 0', textAlign: 'center', fontFamily: 'ui-monospace, monospace', color: 'var(--text-3)' }}>~{r.tokens.toLocaleString()}</td>
                       </tr>
                     );
                   })}
                   <tr>
-                    <td style={{ paddingTop: 10, fontWeight: 700, color: '#60a5fa' }}>Total</td>
+                    <td style={{ paddingTop: 10, fontWeight: 700, color: '#a855f7' }}>Total</td>
                     <td style={{ paddingTop: 10, textAlign: 'center', color: 'var(--success)', fontWeight: 700 }}>3/3</td>
                     <td style={{ paddingTop: 10, textAlign: 'center' }}>
-                      <span className="tag tag-blue">9</span>
+                      <span className="tag tag-purple">9</span>
                     </td>
-                    <td style={{ paddingTop: 10, textAlign: 'center', fontFamily: 'ui-monospace, monospace', fontWeight: 700, color: '#60a5fa' }}>~5,822</td>
+                    <td style={{ paddingTop: 10, textAlign: 'center', fontFamily: 'ui-monospace, monospace', fontWeight: 700, color: '#a855f7' }}>~5,822</td>
                   </tr>
                 </tbody>
               </table>
               <div style={{
-                marginTop: 14, background: 'rgba(59,130,246,0.08)', border: '1px solid var(--border-blue)',
+                marginTop: 14, background: 'rgba(124,58,237,0.08)', border: '1px solid var(--border-purple)',
                 borderRadius: 8, padding: '10px 12px',
               }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#60a5fa', marginBottom: 2 }}>Cross-session recall</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#a855f7', marginBottom: 2 }}>Cross-session recall</div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--success)' }}>3 episodes persisted to D1 + Vectorize</div>
                 <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>Prior fixes visible in subsequent tasks' system prompts. Patterns compound over time.</div>
               </div>

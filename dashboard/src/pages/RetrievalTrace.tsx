@@ -110,9 +110,9 @@ function RetrievalTrace({ client, userId }: { client: LociApiClient; userId: str
             <div className="section-label" style={{ marginBottom: 12 }}>Episode</div>
             <div style={{
               background: 'var(--bg-surface)',
-              border: '1px solid var(--border-blue)',
+              border: '1px solid var(--border-purple)',
               borderRadius: 12, padding: '18px 20px',
-              boxShadow: '0 0 20px rgba(59,130,246,0.06)',
+              boxShadow: '0 0 20px rgba(124,58,237,0.06)',
             }}>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 24px', fontFamily: 'ui-monospace, monospace', fontSize: 11.5, color: 'var(--text-3)', marginBottom: 12 }}>
                 {[
