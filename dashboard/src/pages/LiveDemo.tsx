@@ -218,7 +218,7 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
   // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 0, maxWidth: 980, margin: '0 auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 0, maxWidth: 800, margin: '0 auto' }}>
 
       {/* ═══════════════════════════════════════════
           HERO
@@ -297,75 +297,108 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
       {/* ═══════════════════════════════════════════
           TASK INPUT
       ═══════════════════════════════════════════ */}
-      <div style={{
-        background: C.bgCard, border: `1px solid ${C.border}`,
-        borderRadius: 16, padding: 24, marginBottom: 20,
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <div style={sectionLabelStyle}>Your Task or Bug</div>
-          <div style={{ fontSize: 11, color: C.text3 }}>Shift+Enter → run with memory</div>
+      <div style={{ marginBottom: 20 }}>
+
+        {/* ChatGPT-style open textarea */}
+        <div style={{ position: 'relative' }}>
+          <textarea
+            value={task}
+            onChange={function(e: React.ChangeEvent<HTMLTextAreaElement>) { setTask(e.target.value); }}
+            onKeyDown={function(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+              if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); runWarm(); }
+            }}
+            onFocus={function(e) {
+              const el = e.target as HTMLTextAreaElement;
+              el.style.borderColor = 'rgba(245,158,11,0.45)';
+              el.style.boxShadow = '0 0 0 2px rgba(245,158,11,0.3)';
+            }}
+            onBlur={function(e) {
+              const el = e.target as HTMLTextAreaElement;
+              el.style.borderColor = '#2a2a40';
+              el.style.boxShadow = 'none';
+            }}
+            placeholder={[
+              'Paste a bug or coding task…',
+              '',
+              'e.g. Fix this TypeScript bug:',
+              '',
+              'function getLastN<T>(arr: T[], n: number): T[] {',
+              '  const result: T[] = [];',
+              '  for (let i = arr.length - n; i <= arr.length; i++) {',
+              '    result.push(arr[i]);',
+              '  }',
+              '  return result;',
+              '}',
+              '// returns [30, 40, 50, undefined] instead of [30, 40, 50]',
+            ].join('\n')}
+            style={{
+              display: 'block',
+              width: '100%',
+              minHeight: 140,
+              background: '#13131f',
+              border: '1px solid #2a2a40',
+              borderRadius: 16,
+              color: '#ffffff',
+              caretColor: C.amber,
+              fontFamily: "'SF Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+              fontSize: 14,
+              lineHeight: 1.75,
+              padding: '20px 60px 20px 20px',
+              outline: 'none',
+              resize: 'vertical',
+              transition: 'border-color 0.15s, box-shadow 0.15s',
+              WebkitAppearance: 'none' as any,
+              appearance: 'none' as any,
+            }}
+          />
+          {/* Send icon — bottom-right of textarea */}
+          <button
+            onClick={runWarm}
+            disabled={busy}
+            title="Run With Loci Memory (Shift+Enter)"
+            style={{
+              position: 'absolute', bottom: 14, right: 14,
+              width: 34, height: 34,
+              background: busy
+                ? 'rgba(245,158,11,0.15)'
+                : 'linear-gradient(135deg, #d97706, #f59e0b)',
+              border: 'none',
+              borderRadius: 9,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: busy ? 'not-allowed' : 'pointer',
+              color: '#0d0e14',
+              fontSize: 15,
+              fontWeight: 800,
+              transition: 'opacity 0.15s, transform 0.15s, box-shadow 0.15s',
+              boxShadow: busy ? 'none' : '0 0 14px rgba(245,158,11,0.45)',
+              opacity: busy ? 0.5 : 1,
+            }}
+            onMouseEnter={function(e) {
+              if (!busy) {
+                const b = e.currentTarget as HTMLButtonElement;
+                b.style.transform = 'translateY(-1px)';
+                b.style.boxShadow = '0 0 22px rgba(245,158,11,0.65)';
+              }
+            }}
+            onMouseLeave={function(e) {
+              const b = e.currentTarget as HTMLButtonElement;
+              b.style.transform = '';
+              b.style.boxShadow = busy ? 'none' : '0 0 14px rgba(245,158,11,0.45)';
+            }}
+          >
+            {busy ? <Spinner size={12} color="rgba(245,158,11,0.6)" /> : '↑'}
+          </button>
         </div>
 
-        {/* Textarea — fully explicit, no class inheritance */}
-        <textarea
-          value={task}
-          onChange={function(e: React.ChangeEvent<HTMLTextAreaElement>) { setTask(e.target.value); }}
-          onKeyDown={function(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-            if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); runWarm(); }
-          }}
-          onFocus={function(e) {
-            (e.target as HTMLTextAreaElement).style.borderColor = 'rgba(245,158,11,0.55)';
-            (e.target as HTMLTextAreaElement).style.boxShadow = '0 0 0 3px rgba(245,158,11,0.08)';
-          }}
-          onBlur={function(e) {
-            (e.target as HTMLTextAreaElement).style.borderColor = '#2a2a40';
-            (e.target as HTMLTextAreaElement).style.boxShadow = 'none';
-          }}
-          rows={9}
-          placeholder={[
-            'Paste a bug or coding task. For example:',
-            '',
-            'Fix this TypeScript bug:',
-            '',
-            'function getLastN<T>(arr: T[], n: number): T[] {',
-            '  const result: T[] = [];',
-            '  for (let i = arr.length - n; i <= arr.length; i++) {',
-            '    result.push(arr[i]);',
-            '  }',
-            '  return result;',
-            '}',
-            '// Bug: returns [30, 40, 50, undefined] instead of [30, 40, 50]',
-          ].join('\n')}
-          style={{
-            display: 'block',
-            width: '100%',
-            minHeight: 200,
-            background: '#0a0a12',
-            border: '1px solid #2a2a40',
-            borderRadius: 10,
-            color: '#ffffff',
-            caretColor: C.amber,
-            fontFamily: "'SF Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
-            fontSize: 12.5,
-            lineHeight: 1.75,
-            padding: '14px 16px',
-            outline: 'none',
-            resize: 'vertical',
-            transition: 'border-color 0.15s, box-shadow 0.15s',
-            WebkitAppearance: 'none' as any,
-            appearance: 'none' as any,
-          }}
-        />
-
-        {/* Buttons */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 16 }}>
+        {/* Buttons below textarea */}
+        <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
 
           {/* Cold — dark ghost */}
           <button
             onClick={runCold}
             disabled={busy}
             style={{
-              flex: '1 1 160px',
+              flex: 1,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               padding: '12px 20px', fontSize: 13.5, fontWeight: 600,
               background: '#1a1b26',
@@ -398,7 +431,7 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
             onClick={runWarm}
             disabled={busy}
             style={{
-              flex: '2 1 200px',
+              flex: 2,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               padding: '12px 24px', fontSize: 13.5, fontWeight: 800,
               background: busy
