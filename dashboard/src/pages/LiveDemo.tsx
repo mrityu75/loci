@@ -95,6 +95,144 @@ const C = {
   orange:       '#fb923c',
 };
 
+// ── Markdown response renderer ────────────────────────────────────────────────
+
+function renderInline(text: string): React.ReactNode {
+  if (!text) return null;
+  const parts: React.ReactNode[] = [];
+  const regex = /(\*\*[^*\n]+?\*\*|`[^`\n]+?`)/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = regex.exec(text)) !== null) {
+    if (m.index > last) parts.push(text.slice(last, m.index));
+    if (m[0].startsWith('**')) {
+      parts.push(
+        <strong key={m.index} style={{ fontWeight: 700, color: '#ffffff' }}>
+          {m[0].slice(2, -2)}
+        </strong>
+      );
+    } else {
+      parts.push(
+        <code key={m.index} style={{
+          fontFamily: "'SF Mono', ui-monospace, Menlo, monospace",
+          fontSize: '0.87em', background: '#14151e',
+          padding: '1px 6px', borderRadius: 4, color: '#b8c8e0',
+        }}>
+          {m[0].slice(1, -1)}
+        </code>
+      );
+    }
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  if (parts.length === 0) return null;
+  if (parts.length === 1) return parts[0];
+  return <>{parts}</>;
+}
+
+function renderResponse(text: string, textColor: string): React.ReactElement {
+  const blocks = text.trim().split(/\n{2,}/);
+  return (
+    <div style={{ fontFamily: "-apple-system, 'Segoe UI', system-ui, sans-serif" }}>
+      {blocks.map(function(block, i) {
+        if (!block.trim()) return null;
+        const mt = i === 0 ? 0 : 12;
+
+        // Code block
+        if (block.startsWith('```')) {
+          const nl = block.indexOf('\n');
+          const closingIdx = block.lastIndexOf('\n```');
+          const code = closingIdx > nl ? block.slice(nl + 1, closingIdx) : block.slice(nl + 1);
+          return (
+            <pre key={i} style={{
+              marginTop: mt, background: '#0a0a14', border: '1px solid #1e2030',
+              borderRadius: 8, padding: '12px 14px',
+              fontFamily: "'SF Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+              fontSize: 12.5, lineHeight: 1.65, color: '#b8cce0',
+              overflowX: 'auto', whiteSpace: 'pre' as const,
+            }}>{code}</pre>
+          );
+        }
+
+        // Heading (check first line)
+        const firstLine = block.split('\n')[0];
+        const headingMatch = firstLine.match(/^(#{1,3}) (.+)/);
+        if (headingMatch) {
+          const level = headingMatch[1].length;
+          const sz = level === 1 ? 20 : level === 2 ? 17 : 15.5;
+          const fw = level === 1 ? 800 : 700;
+          const rest = block.split('\n').slice(1).join('\n').trim();
+          return (
+            <React.Fragment key={i}>
+              <div style={{
+                marginTop: i === 0 ? 0 : 20,
+                marginBottom: rest ? 6 : 0,
+                fontSize: sz, fontWeight: fw,
+                color: '#ffffff', letterSpacing: '-0.01em', lineHeight: 1.3,
+              }}>
+                {renderInline(headingMatch[2])}
+              </div>
+              {rest && (
+                <div style={{ fontSize: 15, lineHeight: 1.75, color: textColor }}>
+                  {rest.split('\n').map(function(line, j) {
+                    return <React.Fragment key={j}>{j > 0 && <br />}{renderInline(line)}</React.Fragment>;
+                  })}
+                </div>
+              )}
+            </React.Fragment>
+          );
+        }
+
+        const lines = block.split('\n');
+
+        // Unordered list
+        if (lines[0].match(/^[-*] /)) {
+          return (
+            <ul key={i} style={{ marginTop: mt, paddingLeft: 18, listStyleType: 'disc' as const }}>
+              {lines.filter(function(l) { return !!l.match(/^[-*] /); }).map(function(l, j) {
+                return (
+                  <li key={j} style={{ fontSize: 15, lineHeight: 1.75, color: textColor, marginTop: j > 0 ? 3 : 0 }}>
+                    {renderInline(l.replace(/^[-*] /, ''))}
+                  </li>
+                );
+              })}
+            </ul>
+          );
+        }
+
+        // Ordered list
+        if (lines[0].match(/^\d+\. /)) {
+          return (
+            <ol key={i} style={{ marginTop: mt, paddingLeft: 20 }}>
+              {lines.filter(function(l) { return !!l.match(/^\d+\. /); }).map(function(l, j) {
+                return (
+                  <li key={j} style={{ fontSize: 15, lineHeight: 1.75, color: textColor, marginTop: j > 0 ? 3 : 0 }}>
+                    {renderInline(l.replace(/^\d+\. /, ''))}
+                  </li>
+                );
+              })}
+            </ol>
+          );
+        }
+
+        // Regular paragraph
+        return (
+          <div key={i} style={{ marginTop: mt, fontSize: 15, lineHeight: 1.75, color: textColor }}>
+            {lines.map(function(line, j) {
+              return (
+                <React.Fragment key={j}>
+                  {j > 0 && <br />}
+                  {renderInline(line)}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 
 function LiveDemo({ client, userId, episodeCount, onEpisodeSaved }: {
@@ -593,9 +731,8 @@ function LiveDemo({ client, userId, episodeCount, onEpisodeSaved }: {
                     <div style={{
                       background: C.bgRaised, border: `1px solid ${C.border}`,
                       borderRadius: 10, padding: '14px 16px',
-                      fontSize: 13, lineHeight: 1.75, color: '#c8c8e0',
-                      whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxHeight: 400, overflowY: 'auto',
-                    }}>{coldReply}</div>
+                      maxHeight: 400, overflowY: 'auto',
+                    }}>{renderResponse(coldReply, '#e8e8f0')}</div>
                   )}
                 </div>
               </div>
@@ -759,9 +896,8 @@ function LiveDemo({ client, userId, episodeCount, onEpisodeSaved }: {
                     <div style={{
                       background: 'rgba(99,102,241,0.04)', border: '1px solid rgba(99,102,241,0.15)',
                       borderRadius: 10, padding: '14px 16px',
-                      fontSize: 13, lineHeight: 1.75, color: C.indigoActive,
-                      whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxHeight: 400, overflowY: 'auto',
-                    }}>{warmReply}</div>
+                      maxHeight: 400, overflowY: 'auto',
+                    }}>{renderResponse(warmReply, '#e8f0ff')}</div>
                   )}
                 </div>
 
