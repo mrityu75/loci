@@ -50,36 +50,22 @@ function buildLiveSystemPrompt(contexts: MemoryContext[]): string {
 }
 
 async function callClaude(
-  apiKey: string,
   systemPrompt: string,
   userMessage: string,
 ): Promise<string> {
-  const body: Record<string, unknown> = {
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 1024,
-    messages: [{ role: 'user', content: userMessage }],
-  };
-  if (systemPrompt) body.system = systemPrompt;
-
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetch(window.location.origin + '/chat', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify(body),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userMessage, systemPrompt: systemPrompt || undefined }),
   });
 
   if (!res.ok) {
     const text = await res.text().catch(function() { return res.statusText; });
-    throw new Error('Anthropic ' + res.status + ': ' + text);
+    throw new Error('Chat error ' + res.status + ': ' + text);
   }
 
-  const data = await res.json() as { content: Array<{ type: string; text: string }> };
-  const block = data.content.find(function(c) { return c.type === 'text'; });
-  return block ? block.text : '(no text in response)';
+  const data = await res.json() as { reply: string };
+  return data.reply;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -91,7 +77,6 @@ type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 function LiveDemo({ client, userId }: { client: LociApiClient; userId: string }) {
   const { useState, useEffect, useCallback, useRef } = React;
 
-  const [apiKey, setApiKey]           = useState(localStorage.getItem('loci_demo_api_key') || '');
   const [task, setTask]               = useState('');
   const [episodeCount, setEpisodeCount] = useState<number | null>(null);
 
@@ -112,10 +97,6 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
   const sessionIdRef  = useRef<string>(crypto.randomUUID());
   const startedAtRef  = useRef<number>(Date.now());
 
-  useEffect(function() {
-    if (apiKey) localStorage.setItem('loci_demo_api_key', apiKey);
-  }, [apiKey]);
-
   // ── Episode counter ────────────────────────────────────────────────────────
 
   const refreshCount = useCallback(async function() {
@@ -129,15 +110,6 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
-  function requireKey(): boolean {
-    if (!apiKey.trim()) {
-      setColdError('Paste your Anthropic API key at the top.');
-      setWarmError('Paste your Anthropic API key at the top.');
-      return false;
-    }
-    return true;
-  }
-
   function requireTask(): boolean {
     if (!task.trim()) {
       setColdError('Enter a task or bug description first.');
@@ -150,7 +122,7 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
   // ── Run without memory ─────────────────────────────────────────────────────
 
   async function runCold() {
-    if (!requireKey() || !requireTask()) return;
+    if (!requireTask()) return;
 
     // Fresh session
     sessionIdRef.current  = crypto.randomUUID();
@@ -170,7 +142,7 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
     setSaveError('');
 
     try {
-      const reply = await callClaude(apiKey.trim(), '', task);
+      const reply = await callClaude('', task);
       setColdReply(reply);
       setColdStatus('done');
     } catch (e: unknown) {
@@ -182,7 +154,7 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
   // ── Run with Loci memory ───────────────────────────────────────────────────
 
   async function runWarm() {
-    if (!requireKey() || !requireTask()) return;
+    if (!requireTask()) return;
 
     setWarmStatus('retrieving');
     setWarmReply('');
@@ -204,7 +176,7 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
 
       // Step 2 — call Claude with the memory context as system prompt
       setWarmStatus('calling');
-      const reply = await callClaude(apiKey.trim(), prompt, task);
+      const reply = await callClaude(prompt, task);
       setWarmReply(reply);
       setWarmStatus('done');
     } catch (e: unknown) {
@@ -267,29 +239,6 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
             </div>
           </div>
         </div>
-      </div>
-
-      {/* ── API key ── */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-          Anthropic API Key
-        </label>
-        <div className="flex gap-2 items-center">
-          <input
-            type="password"
-            value={apiKey}
-            onChange={function(e: React.ChangeEvent<HTMLInputElement>) { setApiKey(e.target.value); }}
-            placeholder="sk-ant-..."
-            className="flex-1 text-sm font-mono rounded-lg border border-slate-200 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-slate-50"
-          />
-          {apiKey
-            ? <span className="text-green-600 text-xs font-bold whitespace-nowrap">✓ Key set</span>
-            : <span className="text-slate-400 text-xs whitespace-nowrap">Required</span>}
-        </div>
-        <p className="text-xs text-slate-400 mt-1.5">
-          Used only in your browser — never sent to the Loci Worker. Get a key at{' '}
-          <span className="font-mono">console.anthropic.com</span>.
-        </p>
       </div>
 
       {/* ── Task input ── */}

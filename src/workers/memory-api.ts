@@ -15,6 +15,7 @@ interface Env {
   LEARNINGS_INDEX: VectorizeIndex;
   WORKING_MEMORY: DurableObjectNamespace;
   MEMORY_QUEUE: Queue;
+  ANTHROPIC_API_KEY: string;
 }
 
 // Minimal DO + Queue stubs so TypeScript resolves without @cloudflare/workers-types
@@ -265,6 +266,51 @@ async function handleGetLearnings(request: Request, env: Env): Promise<Response>
   return json({ learnings });
 }
 
+// POST /chat
+// Body: { userMessage: string, systemPrompt?: string }
+// Proxies to Anthropic API server-side so the API key never reaches the browser.
+async function handlePostChat(request: Request, env: Env): Promise<Response> {
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json() as Record<string, unknown>;
+  } catch {
+    return err('Invalid JSON body');
+  }
+
+  const { userMessage, systemPrompt } = body;
+  if (typeof userMessage !== 'string' || !userMessage.trim()) {
+    return err('userMessage must be a non-empty string');
+  }
+
+  const reqBody: Record<string, unknown> = {
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 1024,
+    messages: [{ role: 'user', content: userMessage }],
+  };
+  if (typeof systemPrompt === 'string' && systemPrompt.trim()) {
+    reqBody.system = systemPrompt;
+  }
+
+  const upstream = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify(reqBody),
+  });
+
+  if (!upstream.ok) {
+    const text = await upstream.text().catch(() => upstream.statusText);
+    return err(`Anthropic ${upstream.status}: ${text}`, 502);
+  }
+
+  const data = await upstream.json() as { content: Array<{ type: string; text: string }> };
+  const reply = data.content.find((c) => c.type === 'text')?.text ?? '';
+  return json({ reply });
+}
+
 async function handleGetHealth(env: Env): Promise<Response> {
   // Quick D1 liveness check
   try {
@@ -313,6 +359,9 @@ export default {
     }
     if (method === 'POST' && pathname === '/session') {
       return handlePostSession(request, env);
+    }
+    if (method === 'POST' && pathname === '/chat') {
+      return handlePostChat(request, env);
     }
     if (method === 'GET' && pathname === '/health') {
       return handleGetHealth(env);
