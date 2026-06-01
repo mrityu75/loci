@@ -69,37 +69,44 @@ function Spinner({ size = 13, color = 'rgba(255,255,255,0.75)' }: { size?: numbe
 // ── Palette ────────────────────────────────────────────────────────────────────
 
 const C = {
-  bgPage:      '#0d0e14',
-  bgCard:      '#13141c',
-  bgCardDeep:  '#0f1018',
-  bgRaised:    '#1a1b26',
-  bgInput:     '#0a0a12',
-  bgTerminal:  '#050508',
-  border:      '#1e1f2e',
-  borderMd:    '#2a2a40',
-  borderAmber: 'rgba(245,158,11,0.35)',
-  borderGreen: 'rgba(16,185,129,0.3)',
-  borderRed:   'rgba(248,113,113,0.2)',
-  text1:       '#ffffff',
-  text2:       '#8888aa',
-  text3:       '#555577',
-  amber:       '#f59e0b',
-  amberHi:     '#fbbf24',
-  amberDim:    'rgba(245,158,11,0.1)',
-  amberDark:   '#d97706',
-  green:       '#10b981',
-  greenHi:     '#34d399',
-  red:         '#f87171',
-  orange:      '#fb923c',
+  bgPage:       '#0d0e14',
+  bgCard:       '#13141c',
+  bgCardDeep:   '#0f1018',
+  bgRaised:     '#1a1b26',
+  bgInput:      '#13131f',
+  bgTerminal:   '#050508',
+  border:       '#1e1f2e',
+  borderMd:     '#2a2a40',
+  borderIndigo: 'rgba(99,102,241,0.35)',
+  borderGreen:  'rgba(16,185,129,0.3)',
+  borderRed:    'rgba(248,113,113,0.2)',
+  text1:        '#ffffff',
+  text2:        '#8888aa',
+  text3:        '#555577',
+  amber:        '#f59e0b',    // episode counter only
+  indigo:       '#4f46e5',
+  indigoBright: '#6366f1',
+  indigoLight:  '#818cf8',
+  indigoActive: '#e0e8ff',
+  indigoDim:    'rgba(99,102,241,0.1)',
+  green:        '#10b981',
+  greenHi:      '#34d399',
+  red:          '#f87171',
+  orange:       '#fb923c',
 };
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
-function LiveDemo({ client, userId }: { client: LociApiClient; userId: string }) {
-  const { useState, useEffect, useCallback, useRef } = React;
+function LiveDemo({ client, userId, episodeCount, onEpisodeSaved }: {
+  client: LociApiClient;
+  userId: string;
+  episodeCount: number | null;
+  onEpisodeSaved: () => void;
+}) {
+  const { useState, useRef } = React;
 
-  const [task, setTask]                 = useState('');
-  const [episodeCount, setEpisodeCount] = useState<number | null>(null);
+  const [task, setTask]       = useState('');
+  const [focused, setFocused] = useState(false);
 
   const [coldStatus, setColdStatus] = useState<ColdStatus>('idle');
   const [coldReply, setColdReply]   = useState('');
@@ -117,12 +124,6 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
 
   const sessionIdRef = useRef<string>(crypto.randomUUID());
   const startedAtRef = useRef<number>(Date.now());
-
-  const refreshCount = useCallback(async function() {
-    try { const eps = await client.getEpisodes(userId); setEpisodeCount(eps.length); } catch (_) {}
-  }, [client, userId]);
-
-  useEffect(function() { refreshCount(); }, [refreshCount]);
 
   function requireTask(): boolean {
     if (!task.trim()) {
@@ -180,7 +181,7 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
         metadata: { source: 'live-demo' },
       });
       setSavedId(result.id); setSaveStatus('saved');
-      await refreshCount();
+      onEpisodeSaved();
     } catch (e: unknown) {
       setSaveError(e instanceof Error ? e.message : String(e));
       setSaveStatus('error');
@@ -190,12 +191,11 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
   const busy   = coldStatus === 'loading' || warmStatus === 'retrieving' || warmStatus === 'calling';
   const hasAny = coldStatus !== 'idle' || warmStatus !== 'idle';
 
-  // ── Shared style helpers ──────────────────────────────────────────────────────
-
   const sectionLabelStyle: React.CSSProperties = {
     fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
     letterSpacing: '0.1em', color: C.text3, marginBottom: 10,
   };
+
   function idleBox(text: string): React.ReactElement {
     return (
       <div style={{
@@ -206,11 +206,13 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
       </div>
     );
   }
+
   function errBox(msg: string): React.ReactElement {
     return (
       <div style={{
         background: 'rgba(248,113,113,0.07)', border: `1px solid ${C.borderRed}`,
-        borderRadius: 10, padding: '12px 14px', fontSize: 12.5, color: C.red, wordBreak: 'break-word' as const,
+        borderRadius: 10, padding: '12px 14px', fontSize: 12.5, color: C.red,
+        wordBreak: 'break-word' as const,
       }}>{msg}</div>
     );
   }
@@ -218,7 +220,7 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
   // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 0, maxWidth: 800, margin: '0 auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
 
       {/* ═══════════════════════════════════════════
           HERO
@@ -226,18 +228,18 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
       <div style={{
         position: 'relative', overflow: 'hidden', borderRadius: 18,
         background: 'linear-gradient(140deg, #0f1018 0%, #111220 50%, #0d0e16 100%)',
-        border: `1px solid #1e2030`,
-        padding: '40px 36px 34px', marginBottom: 20,
+        border: '1px solid #1e2030',
+        padding: '40px 36px 34px', marginBottom: 24,
       }}>
-        {/* Amber glow blobs */}
+        {/* Indigo glow blobs */}
         <div style={{
           position: 'absolute', top: -60, right: -40, width: 320, height: 320,
-          background: 'radial-gradient(circle, rgba(245,158,11,0.1) 0%, transparent 65%)',
+          background: 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 65%)',
           pointerEvents: 'none',
         }} />
         <div style={{
           position: 'absolute', bottom: -80, left: 80, width: 240, height: 240,
-          background: 'radial-gradient(circle, rgba(217,119,6,0.06) 0%, transparent 65%)',
+          background: 'radial-gradient(circle, rgba(79,70,229,0.07) 0%, transparent 65%)',
           pointerEvents: 'none',
         }} />
 
@@ -246,37 +248,36 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
             {/* Pill */}
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 7,
-              background: '#f59e0b', borderRadius: 9999,
-              padding: '5px 14px', marginBottom: 20,
+              background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)',
+              borderRadius: 9999, padding: '5px 14px', marginBottom: 20,
             }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#0d0e14', display: 'inline-block' }} />
-              <span style={{ fontSize: 10.5, fontWeight: 800, color: '#0d0e14', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: C.indigoBright, display: 'inline-block' }} />
+              <span style={{ fontSize: 10.5, fontWeight: 800, color: C.indigoLight, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                 Live Interactive Demo
               </span>
             </div>
 
             <h1 style={{
               fontSize: 36, fontWeight: 800, margin: '0 0 14px',
-              letterSpacing: '-0.04em', lineHeight: 1.08,
-              color: '#ffffff',
+              letterSpacing: '-0.04em', lineHeight: 1.08, color: '#ffffff',
             }}>
               Memory Changes<br />Everything
             </h1>
             <p style={{ fontSize: 14.5, color: '#c0c0d8', margin: 0, lineHeight: 1.65, maxWidth: 390 }}>
               Paste a coding task. Run it{' '}
               <span style={{ color: '#ffffff', fontWeight: 600 }}>cold</span> for the baseline, then{' '}
-              <span style={{ color: C.amber, fontWeight: 600 }}>with Loci</span> to see prior context
+              <span style={{ color: C.indigoActive, fontWeight: 600 }}>with Loci</span> to see prior context
               retrieved and injected into the system prompt in real time.
             </p>
           </div>
 
-          {/* Episode counter */}
+          {/* Episode counter — amber kept here only */}
           <div style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center',
             background: 'rgba(245,158,11,0.06)',
-            border: `1px solid rgba(245,158,11,0.25)`,
+            border: '1px solid rgba(245,158,11,0.22)',
             borderRadius: 16, padding: '22px 30px',
-            boxShadow: '0 0 40px rgba(245,158,11,0.1)',
+            boxShadow: '0 0 40px rgba(245,158,11,0.08)',
           }}>
             <span style={{
               fontSize: 52, fontWeight: 800, lineHeight: 1, letterSpacing: '-0.05em',
@@ -295,12 +296,30 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
       </div>
 
       {/* ═══════════════════════════════════════════
-          TASK INPUT
+          TASK INPUT — ChatGPT style
       ═══════════════════════════════════════════ */}
-      <div style={{ marginBottom: 20 }}>
+      <div style={{ marginBottom: 24 }}>
 
-        {/* ChatGPT-style open textarea */}
+        {/* Textarea wrapper with centered placeholder overlay */}
         <div style={{ position: 'relative' }}>
+
+          {/* Placeholder — shown when empty and not focused */}
+          {!task && !focused && (
+            <div style={{
+              position: 'absolute', inset: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              pointerEvents: 'none',
+              fontSize: 18, fontWeight: 400,
+              color: 'rgba(255,255,255,0.28)',
+              letterSpacing: '-0.01em',
+              fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif",
+              paddingRight: 60,
+              paddingBottom: 8,
+            }}>
+              What do you want to fix or build?
+            </div>
+          )}
+
           <textarea
             value={task}
             onChange={function(e: React.ChangeEvent<HTMLTextAreaElement>) { setTask(e.target.value); }}
@@ -308,42 +327,31 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
               if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); runWarm(); }
             }}
             onFocus={function(e) {
+              setFocused(true);
               const el = e.target as HTMLTextAreaElement;
-              el.style.borderColor = 'rgba(245,158,11,0.45)';
-              el.style.boxShadow = '0 0 0 2px rgba(245,158,11,0.3)';
+              el.style.borderColor = 'rgba(99,102,241,0.6)';
+              el.style.boxShadow = '0 0 0 2px rgba(79,70,229,0.18)';
             }}
             onBlur={function(e) {
+              setFocused(false);
               const el = e.target as HTMLTextAreaElement;
               el.style.borderColor = '#2a2a40';
               el.style.boxShadow = 'none';
             }}
-            placeholder={[
-              'Paste a bug or coding task…',
-              '',
-              'e.g. Fix this TypeScript bug:',
-              '',
-              'function getLastN<T>(arr: T[], n: number): T[] {',
-              '  const result: T[] = [];',
-              '  for (let i = arr.length - n; i <= arr.length; i++) {',
-              '    result.push(arr[i]);',
-              '  }',
-              '  return result;',
-              '}',
-              '// returns [30, 40, 50, undefined] instead of [30, 40, 50]',
-            ].join('\n')}
+            placeholder=""
             style={{
               display: 'block',
               width: '100%',
-              minHeight: 140,
+              minHeight: 160,
               background: '#13131f',
               border: '1px solid #2a2a40',
-              borderRadius: 16,
+              borderRadius: 20,
               color: '#ffffff',
-              caretColor: C.amber,
+              caretColor: C.indigoLight,
               fontFamily: "'SF Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
               fontSize: 14,
               lineHeight: 1.75,
-              padding: '20px 60px 20px 20px',
+              padding: '24px 60px 24px 24px',
               outline: 'none',
               resize: 'vertical',
               transition: 'border-color 0.15s, box-shadow 0.15s',
@@ -351,46 +359,45 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
               appearance: 'none' as any,
             }}
           />
-          {/* Send icon — bottom-right of textarea */}
+
+          {/* Send button — indigo, bottom-right */}
           <button
             onClick={runWarm}
             disabled={busy}
             title="Run With Loci Memory (Shift+Enter)"
             style={{
-              position: 'absolute', bottom: 14, right: 14,
+              position: 'absolute', bottom: 16, right: 16,
               width: 34, height: 34,
               background: busy
-                ? 'rgba(245,158,11,0.15)'
-                : 'linear-gradient(135deg, #d97706, #f59e0b)',
-              border: 'none',
-              borderRadius: 9,
+                ? 'rgba(99,102,241,0.15)'
+                : 'linear-gradient(135deg, #4338ca, #4f46e5)',
+              border: 'none', borderRadius: 9,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: busy ? 'not-allowed' : 'pointer',
-              color: '#0d0e14',
-              fontSize: 15,
-              fontWeight: 800,
-              transition: 'opacity 0.15s, transform 0.15s, box-shadow 0.15s',
-              boxShadow: busy ? 'none' : '0 0 14px rgba(245,158,11,0.45)',
+              color: '#ffffff',
+              fontSize: 15, fontWeight: 800,
+              transition: 'transform 0.15s, box-shadow 0.15s',
+              boxShadow: busy ? 'none' : '0 0 14px rgba(79,70,229,0.5)',
               opacity: busy ? 0.5 : 1,
             }}
             onMouseEnter={function(e) {
               if (!busy) {
                 const b = e.currentTarget as HTMLButtonElement;
                 b.style.transform = 'translateY(-1px)';
-                b.style.boxShadow = '0 0 22px rgba(245,158,11,0.65)';
+                b.style.boxShadow = '0 0 22px rgba(79,70,229,0.7)';
               }
             }}
             onMouseLeave={function(e) {
               const b = e.currentTarget as HTMLButtonElement;
               b.style.transform = '';
-              b.style.boxShadow = busy ? 'none' : '0 0 14px rgba(245,158,11,0.45)';
+              b.style.boxShadow = busy ? 'none' : '0 0 14px rgba(79,70,229,0.5)';
             }}
           >
-            {busy ? <Spinner size={12} color="rgba(245,158,11,0.6)" /> : '↑'}
+            {busy ? <Spinner size={12} color="rgba(224,232,255,0.7)" /> : '↑'}
           </button>
         </div>
 
-        {/* Buttons below textarea */}
+        {/* Action buttons below textarea */}
         <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
 
           {/* Cold — dark ghost */}
@@ -401,8 +408,7 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
               flex: 1,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               padding: '12px 20px', fontSize: 13.5, fontWeight: 600,
-              background: '#1a1b26',
-              border: '1px solid #2a2a40',
+              background: '#1a1b26', border: '1px solid #2a2a40',
               color: '#ffffff', borderRadius: 10,
               cursor: busy ? 'not-allowed' : 'pointer',
               opacity: busy ? 0.45 : 1,
@@ -426,41 +432,41 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
               : <><span style={{ fontSize: 16 }}>🚫</span><span>Without Memory</span></>}
           </button>
 
-          {/* Warm — amber gradient, dark text */}
+          {/* Warm — indigo gradient */}
           <button
             onClick={runWarm}
             disabled={busy}
             style={{
               flex: 2,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              padding: '12px 24px', fontSize: 13.5, fontWeight: 800,
+              padding: '12px 24px', fontSize: 13.5, fontWeight: 700,
               background: busy
-                ? 'rgba(245,158,11,0.3)'
-                : 'linear-gradient(135deg, #d97706 0%, #f59e0b 55%, #fbbf24 100%)',
+                ? 'rgba(99,102,241,0.25)'
+                : 'linear-gradient(135deg, #4338ca 0%, #4f46e5 55%, #6366f1 100%)',
               border: 'none',
-              color: busy ? 'rgba(255,255,255,0.5)' : '#0d0e14',
+              color: busy ? 'rgba(255,255,255,0.5)' : '#ffffff',
               borderRadius: 10,
               cursor: busy ? 'not-allowed' : 'pointer',
-              boxShadow: busy ? 'none' : '0 0 24px rgba(245,158,11,0.4), 0 2px 8px rgba(0,0,0,0.25)',
-              transition: 'opacity 0.15s, transform 0.15s, box-shadow 0.15s',
+              boxShadow: busy ? 'none' : '0 0 24px rgba(79,70,229,0.4), 0 2px 8px rgba(0,0,0,0.25)',
+              transition: 'transform 0.15s, box-shadow 0.15s',
             }}
             onMouseEnter={function(e) {
               if (!busy) {
                 const b = e.currentTarget as HTMLButtonElement;
                 b.style.transform = 'translateY(-1px)';
-                b.style.boxShadow = '0 0 40px rgba(245,158,11,0.58), 0 4px 16px rgba(0,0,0,0.3)';
+                b.style.boxShadow = '0 0 40px rgba(79,70,229,0.55), 0 4px 16px rgba(0,0,0,0.3)';
               }
             }}
             onMouseLeave={function(e) {
               const b = e.currentTarget as HTMLButtonElement;
               b.style.transform = '';
-              b.style.boxShadow = busy ? 'none' : '0 0 24px rgba(245,158,11,0.4), 0 2px 8px rgba(0,0,0,0.25)';
+              b.style.boxShadow = busy ? 'none' : '0 0 24px rgba(79,70,229,0.4), 0 2px 8px rgba(0,0,0,0.25)';
             }}
           >
             {warmStatus === 'retrieving'
-              ? <><Spinner color={C.amber} /><span style={{ color: '#ffffff' }}>Querying Loci…</span></>
+              ? <><Spinner color={C.indigoLight} /><span>Querying Loci…</span></>
               : warmStatus === 'calling'
-              ? <><Spinner color={C.amber} /><span style={{ color: '#ffffff' }}>Calling Claude…</span></>
+              ? <><Spinner color={C.indigoLight} /><span>Calling Claude…</span></>
               : <><span style={{ fontSize: 16 }}>🧠</span><span>Run With Loci Memory</span></>}
           </button>
         </div>
@@ -473,12 +479,11 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
         <div style={{
           border: `1px dashed ${C.border}`,
           borderRadius: 16, padding: '64px 32px', textAlign: 'center',
-          background: 'rgba(245,158,11,0.02)',
+          background: 'rgba(99,102,241,0.02)',
         }}>
           <div style={{
             width: 72, height: 72, borderRadius: '50%', margin: '0 auto 20px',
-            background: 'rgba(245,158,11,0.08)',
-            border: `1px solid rgba(245,158,11,0.2)`,
+            background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34,
           }}>🧠</div>
           <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff', marginBottom: 10, letterSpacing: '-0.025em' }}>
@@ -522,9 +527,9 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{
                 display: 'inline-flex', alignItems: 'center',
-                background: 'rgba(245,158,11,0.1)', border: `1px solid rgba(245,158,11,0.28)`,
+                background: C.indigoDim, border: '1px solid rgba(99,102,241,0.28)',
                 borderRadius: 9999, padding: '3px 10px',
-                fontSize: 9, fontWeight: 800, color: C.amber, letterSpacing: '0.1em',
+                fontSize: 9, fontWeight: 800, color: C.indigoLight, letterSpacing: '0.1em',
               }}>AFTER</span>
               <span style={{ fontSize: 11.5, color: C.text2 }}>Loci memory injected</span>
             </div>
@@ -542,7 +547,6 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
               borderRadius: '14px 0 0 14px',
               overflow: 'hidden',
             }}>
-              {/* Header */}
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 padding: '13px 18px', borderBottom: `1px solid ${C.border}`,
@@ -560,7 +564,6 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
               </div>
 
               <div style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 18 }}>
-                {/* System prompt */}
                 <div>
                   <div style={sectionLabelStyle}>System Prompt</div>
                   <div style={{
@@ -572,7 +575,6 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
                   </div>
                 </div>
 
-                {/* Response */}
                 <div>
                   <div style={sectionLabelStyle}>Response</div>
                   {coldStatus === 'idle'    && idleBox('Click "Without Memory" to run cold.')}
@@ -605,27 +607,26 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
             {/* ── AFTER panel ──────────────────────────────────── */}
             <div style={{
               background: C.bgCardDeep,
-              border: `1px solid rgba(245,158,11,0.2)`,
+              border: '1px solid rgba(99,102,241,0.2)',
               borderLeft: 'none',
-              borderTop: `3px solid rgba(245,158,11,0.55)`,
+              borderTop: '3px solid rgba(99,102,241,0.55)',
               borderRadius: '0 14px 14px 0',
               overflow: 'hidden',
-              boxShadow: '4px 0 32px rgba(245,158,11,0.05)',
+              boxShadow: '4px 0 32px rgba(99,102,241,0.06)',
             }}>
-              {/* Header */}
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 10,
-                padding: '13px 18px', borderBottom: `1px solid rgba(245,158,11,0.12)`,
-                background: 'rgba(245,158,11,0.05)',
+                padding: '13px 18px', borderBottom: '1px solid rgba(99,102,241,0.12)',
+                background: 'rgba(99,102,241,0.05)',
               }}>
                 <div style={{
                   width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-                  background: 'rgba(245,158,11,0.12)', border: `1px solid rgba(245,158,11,0.25)`,
+                  background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13,
                 }}>🧠</div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: C.amber }}>With Loci Memory</div>
-                  <div style={{ fontSize: 10.5, color: `${C.amber}66`, marginTop: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: C.indigoActive }}>With Loci Memory</div>
+                  <div style={{ fontSize: 10.5, color: 'rgba(224,232,255,0.4)', marginTop: 1 }}>
                     Vectorize retrieval · system prompt injection
                   </div>
                 </div>
@@ -653,7 +654,8 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
                         display: 'inline-flex', alignItems: 'center', gap: 4,
                         background: 'rgba(16,185,129,0.08)', border: `1px solid ${C.borderGreen}`,
                         borderRadius: 9999, padding: '2px 8px',
-                        fontSize: 9, fontWeight: 800, color: C.greenHi, letterSpacing: '0.08em', textTransform: 'uppercase',
+                        fontSize: 9, fontWeight: 800, color: C.greenHi,
+                        letterSpacing: '0.08em', textTransform: 'uppercase',
                       }}>
                         <span style={{ width: 4, height: 4, borderRadius: '50%', background: C.greenHi, display: 'inline-block' }} />
                         INJECTED
@@ -665,12 +667,10 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
 
                   {warmStatus !== 'idle' && (
                     <div style={{
-                      background: C.bgTerminal,
-                      border: '1px solid #1a1a2e',
+                      background: C.bgTerminal, border: '1px solid #1a1a2e',
                       borderRadius: 12, overflow: 'hidden',
                       boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
                     }}>
-                      {/* Terminal chrome */}
                       <div style={{
                         background: '#08080f',
                         borderBottom: '1px solid rgba(255,255,255,0.05)',
@@ -684,14 +684,13 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
                           fontSize: 10.5, color: 'rgba(136,136,170,0.35)', marginLeft: 8,
                         }}>loci · memory-context</span>
                         {warmStatus === 'retrieving' && (
-                          <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, fontSize: 10.5, color: `${C.amber}88` }}>
-                            <Spinner size={10} color={C.amber} />
-                            <span style={{ color: C.amber }}>retrieving…</span>
+                          <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, fontSize: 10.5 }}>
+                            <Spinner size={10} color={C.indigoLight} />
+                            <span style={{ color: C.indigoLight }}>retrieving…</span>
                           </span>
                         )}
                       </div>
 
-                      {/* Terminal body */}
                       <div
                         className={warmStatus === 'calling' ? 'cursor-blink' : ''}
                         style={{
@@ -705,9 +704,9 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
                         {warmStatus === 'retrieving' && (
                           <span style={{ color: 'rgba(127,255,127,0.3)' }}>
                             {'$ loci retrieve \\\n'}
-                            <span style={{ color: C.amber }}>  --userId </span>
+                            <span style={{ color: C.indigoLight }}>  --userId </span>
                             {userId + ' \\\n'}
-                            <span style={{ color: C.amber }}>  --topK </span>
+                            <span style={{ color: C.indigoLight }}>  --topK </span>
                             {'5 --minScore 0.1\n\n'}
                             {'  Querying Vectorize index…'}
                           </span>
@@ -726,7 +725,7 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
                             : <>
                                 <span style={{ color: 'rgba(127,255,127,0.3)' }}>
                                   {'$ loci retrieve --userId ' + userId + ' --topK 5\n'}
-                                  <span style={{ color: C.amber }}>  → </span>
+                                  <span style={{ color: C.indigoLight }}>  → </span>
                                   {memContexts.length + ' context' + (memContexts.length !== 1 ? 's' : '') + ' retrieved\n\n'}
                                 </span>
                                 {systemPrompt}
@@ -744,10 +743,10 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
                   {(warmStatus === 'retrieving' || warmStatus === 'calling') && (
                     <div style={{
                       display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '24px 16px', border: `1px solid rgba(245,158,11,0.18)`,
+                      padding: '24px 16px', border: '1px solid rgba(99,102,241,0.18)',
                       borderRadius: 10, color: C.text2, fontSize: 13,
                     }}>
-                      <Spinner color={C.amber} />
+                      <Spinner color={C.indigoLight} />
                       <span>
                         {warmStatus === 'calling'
                           ? <>Calling <code style={{ fontSize: 10.5, color: C.text3 }}>claude-sonnet-4</code> with memory context…</>
@@ -758,17 +757,17 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
                   {warmStatus === 'error' && errBox(warmError)}
                   {warmStatus === 'done' && (
                     <div style={{
-                      background: 'rgba(245,158,11,0.04)', border: `1px solid rgba(245,158,11,0.15)`,
+                      background: 'rgba(99,102,241,0.04)', border: '1px solid rgba(99,102,241,0.15)',
                       borderRadius: 10, padding: '14px 16px',
-                      fontSize: 13, lineHeight: 1.75, color: '#f0e8d0',
+                      fontSize: 13, lineHeight: 1.75, color: C.indigoActive,
                       whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxHeight: 400, overflowY: 'auto',
                     }}>{warmReply}</div>
                   )}
                 </div>
 
-                {/* Save */}
+                {/* Save episode */}
                 {warmStatus === 'done' && (
-                  <div style={{ borderTop: 'rgba(245,158,11,0.1) 1px solid', paddingTop: 16 }}>
+                  <div style={{ borderTop: '1px solid rgba(99,102,241,0.1)', paddingTop: 16 }}>
                     {saveStatus === 'saved' ? (
                       <div style={{
                         display: 'flex', gap: 14, alignItems: 'flex-start',
@@ -799,8 +798,7 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
                           style={{
                             width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                             gap: 8, padding: '13px 0', fontSize: 14, fontWeight: 700,
-                            background: 'rgba(16,185,129,0.12)',
-                            border: `1px solid ${C.borderGreen}`,
+                            background: 'rgba(16,185,129,0.12)', border: `1px solid ${C.borderGreen}`,
                             borderRadius: 10, color: C.greenHi,
                             cursor: saveStatus === 'saving' ? 'not-allowed' : 'pointer',
                             opacity: saveStatus === 'saving' ? 0.6 : 1,
@@ -843,7 +841,7 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
       ═══════════════════════════════════════════ */}
       <div style={{
         background: C.bgCard, border: `1px solid ${C.border}`,
-        borderRadius: 14, padding: '18px 22px', marginTop: 20,
+        borderRadius: 14, padding: '18px 22px', marginTop: 24,
       }}>
         <div style={{ ...sectionLabelStyle, marginBottom: 14 }}>How it works</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -856,8 +854,8 @@ function LiveDemo({ client, userId }: { client: LociApiClient; userId: string })
               <div key={step.n} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 <span style={{
                   flexShrink: 0, width: 20, height: 20, borderRadius: '50%',
-                  background: 'rgba(245,158,11,0.1)', border: `1px solid rgba(245,158,11,0.25)`,
-                  color: C.amber, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.25)',
+                  color: C.indigoLight, display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 10, fontWeight: 800, marginTop: 1,
                 }}>{step.n}</span>
                 <span style={{ fontSize: 13, color: C.text2, lineHeight: 1.65 }}>{step.text}</span>
