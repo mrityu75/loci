@@ -349,7 +349,7 @@ The name "Loci" comes from the *method of loci*, an ancient Greek mnemonic techn
 
 ## AI Usage Disclosure
 
-**Claude Code** (Anthropic's CLI) was used for code generation throughout this project. I designed the architecture, made all technical decisions, wrote the specifications for each component, and reviewed and tested all code end-to-end. The **Anthropic API** (`claude-sonnet-4-20250514`) powers the coding agent in the live demo. Every piece of generated code was read, understood, and validated by me before being committed.
+**Claude Code** (Anthropic's CLI) was used for code generation throughout this project. I designed the architecture, made all technical decisions, wrote the specifications for each component, and reviewed and tested all code end-to-end. The **Anthropic API** (`claude-sonnet-4-20250514`) powers the coding agent in the live demo. Every piece of generated code was read, understood, and validated by me before being committed. No external repositories were forked or used as a base. All code was written from scratch for this project. The only external dependencies are npm packages (listed in package.json) and Cloudflare's platform APIs.
 
 ---
 
