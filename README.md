@@ -3,30 +3,43 @@
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-loci.mrityu75.workers.dev-brightgreen?style=flat-square)](https://loci.mrityu75.workers.dev)
 [![GitHub](https://img.shields.io/badge/GitHub-mrityu75%2Floci-181717?style=flat-square&logo=github)](https://github.com/mrityu75/loci)
 [![Deploy to Cloudflare Workers](https://img.shields.io/badge/Deploy%20to-Cloudflare%20Workers-F38020?style=flat-square&logo=cloudflare)](https://deploy.workers.cloudflare.com/?url=https://github.com/mrityu75/loci)
-
-> *"What we remember, we become."*
-
-Loci gives AI agents the ability to remember across sessions. Most agent frameworks reset to zero on every run — no learning, no continuity, no accumulated context. Loci fixes that with a structured, retrievable memory layer built entirely on Cloudflare's edge infrastructure.
+[![Stanford CS153](https://img.shields.io/badge/Stanford-CS153%20Spring%202026-8C1515?style=flat-square)](https://github.com/mrityu75/loci)
 
 **Stanford CS153 Final Project · Spring 2026 · Mrityunjay Kumar**
 
 ---
 
-## The Method of Loci
+## The Problem
 
-The name comes from an ancient Greek mnemonic technique: to remember a long list, you imagine placing each item at a specific location along a familiar path — a palace, a street, a garden. To recall, you simply walk the path again and each location triggers its memory.
-
-Loci applies this metaphor to AI agents:
-
-- **Episodes** are memories placed at specific moments in time (the "locations")
-- **Learnings** are distilled rules extracted from those episodes (the "items stored")
-- **Retrieval** is walking the path — querying by vector similarity to surface what's relevant *right now*
-
-The result: an agent that compounds knowledge over time instead of starting from scratch on every run.
+AI assistants like Claude, GPT-4, and Gemini have no memory between conversations. Every time you open a new chat, they start completely fresh — they don't remember what you told them last time, what mistakes they made, or what they already figured out. Imagine hiring a contractor who showed up every morning with no memory of the blueprints they studied the day before. That's how AI agents work today. If you spent an hour teaching Claude your codebase's conventions in one session, and then opened a new chat the next day, it would have forgotten everything. You'd have to explain it all over again. Loci solves this by giving agents a persistent memory layer — so what an agent learns in one session is available in the next.
 
 ---
 
-## Architecture
+## What Loci Does
+
+Loci is a memory system that sits between your AI agent and its past experiences. When an agent finishes a task, Loci stores it as an "episode" — a structured record of what the task was, what the agent did, and what it learned. Before the agent starts its next task, Loci searches those stored episodes and injects the most relevant ones directly into the agent's context. The agent can see its own history.
+
+---
+
+## Live Demo
+
+**Link:** [https://loci.mrityu75.workers.dev](https://loci.mrityu75.workers.dev)
+
+Open the link, paste any coding task into the text box, then click both buttons — **"Run Without Memory"** and **"Run With Memory"** — to see the difference side by side. The version with memory shows what prior episodes were injected and what gets stored after.
+
+---
+
+## Why This Matters — Use Cases
+
+- **Coding agents** that accumulate knowledge about your codebase: your naming conventions, recurring bugs, team preferences, and architectural decisions — building up expertise the same way a senior developer does.
+- **Research agents** that remember what sources they've already consulted, what hypotheses were already ruled out, and what findings should carry forward into the next research session.
+- **Production AI systems** where cold-start failure is expensive: customer support agents that remember past tickets, data pipeline agents that remember which transformations already failed, or any long-running automated workflow where forgetting is a bug.
+
+---
+
+## How It Works — Architecture
+
+When an agent runs a task, Loci stores it as an episode containing the task description, the agent's full response, a summary, and a vector embedding. Before the next task, Loci retrieves similar past episodes by comparing vectors and injects them into the system prompt. The agent sees its own history as structured context — not raw logs, but formatted memory blocks that tell it what it already knows.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -135,14 +148,41 @@ The demo runs a coding agent (`claude-sonnet-4-20250514`) against 3 realistic Ty
 
 ### What the Numbers Mean
 
-Both agents score 3/3 — the tasks are straightforward enough that a cold LLM handles them. The value of Loci shows in the context column and the last:
+Both agents score 3/3 on these tasks — the bugs are simple enough that a cold LLM handles them fine. That's intentional: the goal of the benchmark is to demonstrate the memory pipeline works end-to-end (store, retrieve, inject), not to manufacture an artificial accuracy gap.
 
-- **With Loci**, the agent's system prompt for task 2 contained the full solution to task 1, including the exact fix pattern and its explanation. On real codebases with idiosyncratic conventions, repeated patterns, or domain-specific invariants, that accumulated context is the difference between an agent that improves over time and one that perpetually rediscovers the same answers.
-- **Persistence**: episodes survive process restarts, model changes, and new sessions. A human developer joining the project reads past tickets; an agent using Loci reads past episodes.
+The meaningful difference shows in the **Episodes Injected** and **Episodes Stored** columns:
+
+- **With Loci**, the agent's prompt for task 2 contained the full context from task 1 — the exact fix, the reasoning, and the explanation. On a real codebase with domain-specific conventions, repeated patterns, or project-specific invariants, that accumulated context is the difference between an agent that improves over time and one that perpetually rediscovers the same answers.
+- **Persistence**: episodes survive process restarts, model changes, and new sessions. A human developer joining a project reads past tickets and Slack threads; an agent using Loci reads past episodes.
+- On complex real-world tasks (long multi-file refactors, tasks with project-specific constraints, agents that make mistakes and self-correct), the accuracy gap between cold and memory-augmented agents would be substantially larger.
 
 ---
 
-## Repository Layout
+## Limitations
+
+These are real limitations, not hedges:
+
+- **Character-frequency embeddings, not semantic embeddings.** The current demo uses a 1536-dimensional character-frequency vector for retrieval. This means two episodes with similar words but different meanings may score higher than two semantically related episodes with different vocabulary. Swapping in a real embedding model (Cloudflare Workers AI, OpenAI `text-embedding-3-small`, or Cohere) would dramatically improve retrieval quality.
+- **Distillation pipeline is scaffolded, not complete.** The Cloudflare Queue and queue handler exist and the architecture is wired up, but the reinforcement logic — extracting generalizations from episodes, updating confidence scores on learnings — is a stub that acknowledges messages without processing them. The semantic memory layer (learnings table) is populated through the API but not yet auto-populated from episodes.
+- **Single-user demo, no auth.** The live demo has no authentication. Any user can read or write any episodes by setting an arbitrary `user_id`. This is fine for a demo but would need proper auth before any real deployment.
+- **Simple benchmark tasks don't show the accuracy gap.** The three TypeScript bugs used in the benchmark are solvable by any modern LLM from scratch. The memory layer's value shows more clearly on tasks that require accumulated project-specific knowledge — and those are harder to demonstrate in a reproducible, automated benchmark without a real long-running codebase.
+
+---
+
+## Technical Stack
+
+- **Cloudflare Workers** — serverless compute at the edge, handles all HTTP routes
+- **Cloudflare D1** — SQLite at the edge, stores episodes and learnings with full-text search
+- **Cloudflare Vectorize** — managed vector database, 1536-dim cosine similarity search
+- **Cloudflare Durable Objects** — per-session stateful working memory
+- **Cloudflare Queues** — async pipeline for background learning consolidation
+- **React 18** — dashboard UI, loaded from CDN with no build step
+- **TypeScript** — entire codebase, strict mode
+- **Anthropic API** — `claude-sonnet-4-20250514` powers the demo coding agent
+
+---
+
+## Repository Structure
 
 ```
 loci/
@@ -173,7 +213,7 @@ loci/
 
 ---
 
-## Setup
+## Setup & Reproduction
 
 ### Prerequisites
 
@@ -280,26 +320,44 @@ console.log(result.episodeId);  // UUID of the stored episode
 
 ---
 
-## Production Notes
+## What I Would Add Next
 
-**Embeddings**: The demo uses a character-frequency vector (1536-dim, unit-normalized) so the full pipeline runs without extra API keys. For semantic search, swap `demoEmbed()` for a real model:
-- [Cloudflare Workers AI](https://developers.cloudflare.com/workers-ai/models/text-embeddings/) — `@cf/baai/bge-large-en-v1.5` (1024-dim, runs at edge, no extra key)
-- [OpenAI Embeddings](https://platform.openai.com/docs/guides/embeddings) — `text-embedding-3-small` (1536-dim)
-- [Cohere Embed v3](https://docs.cohere.com/docs/embeddings) (1024-dim)
+- **Real semantic embeddings.** Swap the character-frequency vector for `@cf/baai/bge-large-en-v1.5` via Cloudflare Workers AI — no extra API keys, runs at the edge, and would dramatically improve retrieval precision. Set the `minScore` threshold to `0.5–0.7` to match.
+- **Distillation pipeline.** Complete the Cloudflare Queue consumer to extract generalizations from episodes: identify patterns across multiple episodes, generate rule-level learnings, and update confidence scores over time. This is where the "semantic memory" layer becomes real.
+- **Multi-agent shared memory.** Allow multiple agents (or multiple instances of the same agent) to read from and write to the same memory store — so a coding agent and a code review agent on the same team share accumulated project knowledge.
+- **Confidence decay.** Learnings should decay in confidence over time if they stop being reinforced. A project convention from two years ago might not apply anymore. Time-weighted retrieval would surface recent, high-confidence memories preferentially over stale ones.
 
-**minScore threshold**: Default is `0.1` (tuned for character-frequency vectors). Raise to `0.5–0.7` when using a real semantic embedding model.
+---
 
-**Learning consolidation**: The Cloudflare Queue and `queue` export in `memory-api.ts` provide the hook for async learning extraction. The current stub acknowledges all messages; reinforcement logic (extracting generalizations from episodes, updating confidence scores) goes there.
+## Research Context & Prior Work
+
+Several systems have tackled agent memory before. Here's how Loci compares:
+
+| System | Persistence | Vector Retrieval | Open Source | Edge-Deployable | Episodic Structure |
+|---|---|---|---|---|---|
+| **ChatGPT Memory** | ✓ | Unknown | ✗ | ✗ | ✗ |
+| **LangChain Memory** | Partial | ✓ (with plugins) | ✓ | ✗ | ✗ |
+| **MemGPT** | ✓ | ✓ | ✓ | ✗ | ✓ |
+| **Zep** | ✓ | ✓ | ✓ | ✗ | Partial |
+| **Loci** | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+Loci's distinguishing design choices are: (1) it runs entirely on serverless edge infrastructure with no persistent server to manage, (2) it explicitly models the three-layer cognitive architecture (working/episodic/semantic) rather than treating memory as a single flat store, and (3) the `wrapWithMemory()` SDK makes it a drop-in wrapper for any existing agent function.
+
+The name "Loci" comes from the *method of loci*, an ancient Greek mnemonic technique: to remember a long list, you imagine placing each item at a location along a familiar path. To recall, you walk the path and each location triggers its memory. Loci applies this metaphor to AI agents — episodes are placed at moments in time, and retrieval is walking that path to surface what's relevant now.
 
 ---
 
 ## AI Usage Disclosure
 
-This project was built with:
-- **[Claude Code](https://claude.ai/code)** (Anthropic) — used throughout development for code generation, debugging, and iteration
-- **Anthropic API** (`claude-sonnet-4-20250514`) — powers the coding agent in the demo
+**Claude Code** (Anthropic's CLI) was used for code generation throughout this project. I designed the architecture, made all technical decisions, wrote the specifications for each component, and reviewed and tested all code end-to-end. The **Anthropic API** (`claude-sonnet-4-20250514`) powers the coding agent in the live demo. Every piece of generated code was read, understood, and validated by me before being committed.
 
-All code was reviewed, tested end-to-end, and understood by the author.
+---
+
+## Commit History & Development Process
+
+This project was built over 3 weeks with 25+ commits covering: initial architecture design, D1 schema and episodic store, Vectorize integration, retrieval engine, SDK (`LociClient`, `wrapWithMemory`, `buildMemoryPrompt`), the demo benchmark runner, dashboard UI, and a series of visual and UX iterations on the live demo.
+
+Full commit history: [github.com/mrityu75/loci/commits/main](https://github.com/mrityu75/loci/commits/main)
 
 ---
 
